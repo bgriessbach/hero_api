@@ -1,0 +1,14 @@
+{
+  "name": "hero",
+  "version": "1.0.0",
+  "description": "api to get purchase history and merchant summaries",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bettina Griessbach",
+  "license": "ISC",
+  "dependencies": {
+    "swagger": "^0.7.5"
+  }
+}
