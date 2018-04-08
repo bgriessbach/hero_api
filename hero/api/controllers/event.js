@@ -6,7 +6,8 @@ const missingProducts = [];
 
 module.exports = {
 	addEvent: addEvent,
-	getHistory: getHistory
+	getHistory: getHistory,
+	getEvents: getEvents
 };
 
 function addEvent (req, res, next) {
@@ -28,11 +29,16 @@ function addEvent (req, res, next) {
 		if (err.code === 404) {
 			res.status(404).send({"message": "One or more Merchants not found."});
 		} else if (err.code === "badProduct") {
+			missingProducts.length = 0;
 			res.status(404).send({"message": "One or more products could not be found: " + err.ids});
 		} else {
 			res.status(500).send({"message":"System Error"})
 		}		
 	});
+}
+
+function getEvents(req, res, next) {
+	res.json(getHistory());
 }
 
 function getMerchants(events) {
@@ -67,7 +73,7 @@ function argumentData(events, merchantProducts) {
 	return _.map(events, event => {
 		let merchant = event.merchant;
 		if (event.type === "product-view") {
-			let sku = event.data.product.sku_code;
+			let sku = _.get(event, "data.product.sku_code", null);
 			if (_.isEmpty( merchantProducts[merchant][sku])) {
 				missingProducts.push([merchant,sku]);
 			}
@@ -75,7 +81,7 @@ function argumentData(events, merchantProducts) {
 		} else if (event.type === "transaction") {
 			let lineItems = event.data.transaction.line_items;
 			event.data.transaction.line_items = _.map(lineItems, item => {
-				let sku = item.product.sku_code;
+				let sku = _.get(item, "product.sku_code", null);
 				if (_.isEmpty( merchantProducts[merchant][sku])) {
 					missingProducts.push([merchant,sku]);
 				}

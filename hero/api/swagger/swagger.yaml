@@ -40,27 +40,40 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
-            
-  /hello:
-    # binds a127 app logic to a route
-    x-swagger-router-controller: hello_world
+  /getEventHistory:
+    x-swagger-router-controller: event
     get:
-      description: Returns 'Hello' to the caller
-      # used as the method name of the controller
-      operationId: hello
+      summary: get event history
+      description: get a list of all recorded events
+      operationId: getEvents
+      responses:
+        "200":
+          description: Success
+          schema:
+            type: array
+            items:
+              type: object
+        default:
+          description: Error
+          schema:
+            $ref: "#/definitions/ErrorResponse"
+  /getMerchantHistory/{merchant}:
+    x-swagger-router-controller: merchantHistory
+    get:
+      operationId: getMerchantHistory
+      summary: get merchant history
+      description: get merchant history object
       parameters:
-        - name: name
-          in: query
-          description: The name of the person to whom to say hello
-          required: false
+        - name: merchant
+          in: path
+          description: merchant identifier
+          required: true
           type: string
       responses:
         "200":
           description: Success
           schema:
-            # a pointer to a definition
-            $ref: "#/definitions/HelloWorldResponse"
-        # responses may fall through to errors
+            $ref: "#/definitions/MerchantResponse"
         default:
           description: Error
           schema:
@@ -129,12 +142,21 @@ definitions:
     properties:
       message:
         type: string
-  HelloWorldResponse:
-    required:
-      - message
+  MerchantResponse:
+    type: object
+    required: 
+      - total_events
+      - number_of_customers
+      - events_summary
     properties:
-      message:
-        type: string
+      total_events:
+        type: number
+      number_of_customers:
+        type: number
+      events_summary:
+        type: array
+        items:
+          type: object
   ErrorResponse:
     required:
       - message
