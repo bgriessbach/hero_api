@@ -23,7 +23,6 @@ function addEvent (req, res, next) {
 		} else {
 			return Q.reject({code: "badProduct", ids: missingProducts, message: "One or more products not found."})
 		}
-		// console.log(JSON.stringify(history, null, 2));
 	}).catch(err => {
 		console.log(err);
 		if (err.code === 404) {
