@@ -2,6 +2,7 @@ const _ = require('lodash');
 const Q = require('q');
 let history = [];
 const h = require('../helpers/productInfo');
+const missingProducts = [];
 
 module.exports = {
 	addEvent: addEvent,
@@ -15,12 +16,21 @@ function addEvent (req, res, next) {
 		return getMerchantProducts(merchants);
 	}).then(data =>{
 		let argumentedData = argumentData(events, data);
-		history = _.concat(history, argumentedData);
-		console.log(JSON.stringify(history, null, 2));
-		res.json({"message":"ok"});
+		if (_.isEmpty(missingProducts)) {
+			history = _.concat(history, argumentedData);
+			res.json({"message":"ok"});
+		} else {
+			return Q.reject({code: "badProduct", ids: missingProducts, message: "One or more products not found."})
+		}
+		// console.log(JSON.stringify(history, null, 2));
 	}).catch(err => {
-		if (err.statusCode == 404) {
-			res.status(404).send({"message":"Unable to get product information"})
+		console.log(err);
+		if (err.code === 404) {
+			res.status(404).send({"message": "One or more Merchants not found."});
+		} else if (err.code === "badProduct") {
+			res.status(404).send({"message": "One or more products could not be found: " + err.ids});
+		} else {
+			res.status(500).send({"message":"System Error"})
 		}		
 	});
 }
@@ -40,6 +50,8 @@ function getMerchantProducts(merchants) {
 				return obj;
 			}, {});
 			_.set(productData, [merchant], modifiedData);
+		}).catch(err =>{
+			return Q.reject(err);
 		});
 		promises.push(promise)
 	});
@@ -56,11 +68,17 @@ function argumentData(events, merchantProducts) {
 		let merchant = event.merchant;
 		if (event.type === "product-view") {
 			let sku = event.data.product.sku_code;
+			if (_.isEmpty( merchantProducts[merchant][sku])) {
+				missingProducts.push([merchant,sku]);
+			}
 			event.data.product = _.merge(event.data.product, merchantProducts[merchant][sku]);
 		} else if (event.type === "transaction") {
 			let lineItems = event.data.transaction.line_items;
 			event.data.transaction.line_items = _.map(lineItems, item => {
 				let sku = item.product.sku_code;
+				if (_.isEmpty( merchantProducts[merchant][sku])) {
+					missingProducts.push([merchant,sku]);
+				}
 				item.product = _.merge(item.product, merchantProducts[merchant][sku]);
 				return item;
 			});

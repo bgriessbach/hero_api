@@ -18,6 +18,9 @@ function getProductInfo (merchant) {
 	};
 	return rp(options)
 	.then(response => {
+		if(_.isEmpty(response)) {
+			return Q.reject({code: 404, id: merchant, message: "Response from API empty" });
+		}
 		return response;
 	}).catch(err => {
 		return Q.reject(err);
