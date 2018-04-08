@@ -10,13 +10,13 @@ module.exports = {
 
 function addEvent (req, res, next) {
 	let events = req.swagger.params.eventList.value;
-	let skus = getSkus(events);
+	let merchants = getMerchants(events);
 	return Q.fcall(() => {
-		return getMerchantProducts(skus);
+		return getMerchantProducts(merchants);
 	}).then(data =>{
 		let argumentedData = argumentData(events, data);
 		history = _.concat(history, argumentedData);
-		console.log(getHistory());
+		console.log(JSON.stringify(history, null, 2));
 		res.json({"message":"ok"});
 	}).catch(err => {
 		if (err.statusCode == 404) {
@@ -25,24 +25,15 @@ function addEvent (req, res, next) {
 	});
 }
 
-function getSkus(events) {
-	let sku = {};
-	_.forEach(events, event => {
-		let merchant = event.merchant;
-		if (event.type === "product-view"){
-			_.get(sku, [merchant], false) ? sku[merchant].push(event.data.product.sku_code) : _.set(sku, [merchant], [event.data.product.sku_code]);
-		} else if (event.type === "transaction"){
-			let skus = _.map(event.data.transaction.line_items, "product.sku_code")
-			_.get(sku, [merchant], false) ? sku[merchant] = _.union(sku[merchant], skus) : _.set(sku, [merchant], skus);
-		}
-	});
-	return sku;
+function getMerchants(events) {
+	let merchants = _.map(events, "merchant");
+	return _.uniq(merchants);
 }
 
-function getMerchantProducts(skus) {
+function getMerchantProducts(merchants) {
 	let productData = {};
 	let promises = [];
-	_.forEach(_.keys(skus), merchant => {
+	_.forEach(merchants, merchant => {
 		let promise = h.getProductInfo(merchant).then(data => {
 			let modifiedData = _.reduce(data, (obj, item) => {
 				obj[item.sku_code] = item;
@@ -54,6 +45,8 @@ function getMerchantProducts(skus) {
 	});
 	return Q.all(promises).then(() => {
 		return productData;
+	}).catch(err => {
+		return Q.reject(err);
 	});
 
 }
