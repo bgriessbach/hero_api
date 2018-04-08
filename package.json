@@ -9,6 +9,8 @@
   "author": "Bettina Griessbach",
   "license": "ISC",
   "dependencies": {
+    "lodash": "^4.17.5",
+    "q": "^1.5.1",
     "swagger": "^0.7.5"
   }
 }

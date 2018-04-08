@@ -23,6 +23,7 @@ paths:
     post:
       summary: save event data
       description: save and argument event data
+      operationId: addEvent
       parameters:
         - name: eventList
           in: body
@@ -39,6 +40,7 @@ paths:
           description: Error
           schema:
             $ref: "#/definitions/ErrorResponse"
+            
   /hello:
     # binds a127 app logic to a route
     x-swagger-router-controller: hello_world
@@ -71,6 +73,12 @@ definitions:
     type: array
     items:
       type: object
+      required:
+        - type
+        - merchant
+        - user
+        - time
+        - data
       properties:
         type:
           type: string
@@ -78,7 +86,7 @@ definitions:
           type: string
         user:
           type: string
-        tine:
+        time:
           type: string
         data:
           type: object
@@ -90,6 +98,31 @@ definitions:
                   type: string
             location:
               type: string
+            transaction:
+              type: object
+              properties:
+                order_id:
+                  type: string
+                subtotal:
+                  type: number
+                total:
+                  type: number
+                line_items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      product:
+                        type: object
+                        properties:
+                          sku_code:
+                            type: string
+                          price:
+                            type: number
+                      quantity:
+                        type: number
+                      subtotal:
+                        type: number
   OkResponse:
     required:
       - message
